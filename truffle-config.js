@@ -23,7 +23,7 @@ const HDWalletProvider = require('@truffle/hdwallet-provider');
 //const mnemonic = fs.readFileSync(".secret").toString().trim();
 //const private_keys = fs.readFileSync(".private_keys").toString().trim();
 require('dotenv').config()
-const {API_URL, PRIVATE_KEY} = process.env;
+const {RPC_URL, PRIVATE_KEY, ETHERSCAN_API_KEY} = process.env;
 
 module.exports = {
   /**
@@ -65,7 +65,7 @@ module.exports = {
         //provider: () => new HDWalletProvider(mnemonic, `https://eth-ropsten.alchemyapi.io/v2/HevWsom7jwzIfF8sYTUoJGJrTeBt4vmc`),
         provider: () => new HDWalletProvider({
           privateKeys: [PRIVATE_KEY],
-          providerOrUrl: API_URL,
+          providerOrUrl: RPC_URL,
         }),
         network_id: 3,       // Ropsten's id
         gas: 5500000,        // Ropsten has a lower block limit than mainnet
@@ -77,7 +77,7 @@ module.exports = {
         networkCheckTimeout: 10000,
         provider: () => new HDWalletProvider({
           privateKeys: [PRIVATE_KEY],
-          providerOrUrl: API_URL,
+          providerOrUrl: RPC_URL,
         }),
         network_id: 4,       // Ropsten's id
         gas: 5500000,        // Ropsten has a lower block limit than mainnet
@@ -133,4 +133,11 @@ module.exports = {
     //   }
     // }
   // }
+    plugins: [
+      'truffle-plugin-verify'
+    ],
+    api_keys: {
+      etherscan: ETHERSCAN_API_KEY
+    }
+
 };
