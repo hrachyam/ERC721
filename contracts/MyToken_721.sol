@@ -1,58 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract MyToken_721 is ERC721, Ownable {
+contract MyToken_721 is ERC721Enumerable, Ownable, ReentrancyGuard {
 
-    using Counters for Counters.Counter;
+    uint private _tokenPrice;
+    string private _tokenBaseUri;
+    mapping(address => uint) private _minters; 
 
-    Counters.Counter private _tokenIdCounter;
-
-    mapping(address => uint) private minters; 
-
-    uint constant TOKEN_PRICE = 10 ** 16 wei;
-
-    string private baseURI;
-
-    bool internal locked;
-
-    modifier reentrancyGuard() {
-        require(!locked);
-        locked = true;
-        _;
-        locked = false;
+    constructor(string memory baseUri, uint tokenPrice) ERC721("MyToken", "MTK") {
+        _tokenBaseUri = baseUri;
+        _tokenPrice = tokenPrice;
     }
 
-    constructor(string memory CIDofMetafiles) ERC721("MyToken", "MTK") {
-        baseURI = string(abi.encodePacked("ipfs://", CIDofMetafiles, "/"));
-    }
-
-    function safeMint(address to) public payable reentrancyGuard {
-        uint mintCount = minters[msg.sender];
+    function safeMint() public payable nonReentrant {
+        uint mintCount = _minters[msg.sender];
         if (mintCount > 9) {
-            require(msg.value == TOKEN_PRICE, "Token price is 0.01 ether!");
+            require(msg.value >= _tokenPrice, "Token price is less!");
         } else {
             require(msg.value == 0, "For 10 Tokens there is no cost!");
         }
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
-        minters[msg.sender] += 1;
-        _safeMint(to, tokenId);
-    }
-
-    function totalCountOfTokens() external view onlyOwner returns (uint) {
-        return _tokenIdCounter.current();
+        _minters[msg.sender] += 1;
+        _safeMint(msg.sender, totalSupply() + 1);
     }
 
     function _baseURI() internal view override virtual returns (string memory) {
-        return baseURI;
+        return _tokenBaseUri;
     }
 
-    function changeBaseURI(string calldata CIDofMetafiles) external onlyOwner  {
-        baseURI = string(abi.encodePacked("ipfs://", CIDofMetafiles, "/"));
+    function changeBaseURI(string calldata baseUri) external onlyOwner  {
+        _tokenBaseUri = baseUri;
     }
 
     function balance() external view returns (uint) {
