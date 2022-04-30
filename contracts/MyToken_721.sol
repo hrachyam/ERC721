@@ -7,19 +7,18 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract MyToken_721 is ERC721Enumerable, Ownable, ReentrancyGuard {
 
-    uint private _tokenPrice;
+    uint public tokenPrice;
     string private _tokenBaseUri;
     mapping(address => uint) private _minters; 
 
-    constructor(string memory baseUri, uint tokenPrice) ERC721("MyToken", "MTK") {
+    constructor(string memory baseUri, uint price) ERC721("MyToken", "MTK") {
         _tokenBaseUri = baseUri;
-        _tokenPrice = tokenPrice;
+        tokenPrice = price;
     }
 
     function safeMint() public payable nonReentrant {
-        uint mintCount = _minters[msg.sender];
-        if (mintCount > 9) {
-            require(msg.value >= _tokenPrice, "Token price is less!");
+        if (_minters[msg.sender] > 9) {
+            require(msg.value >= tokenPrice, "Token price is less!");
         } else {
             require(msg.value == 0, "For 10 Tokens there is no cost!");
         }
@@ -35,12 +34,8 @@ contract MyToken_721 is ERC721Enumerable, Ownable, ReentrancyGuard {
         _tokenBaseUri = baseUri;
     }
 
-    function balance() external view returns (uint) {
-        return address(this).balance;
-    }
-
     function withdraw(uint _amount) external payable onlyOwner {
-        require(_amount <= address(this).balance);
+        require(_amount <= address(this).balance, "Not enough amount of Ether!");
         (bool success, ) = msg.sender.call{value: _amount}("");
         require(success, "Failed to transfer!");
     }
